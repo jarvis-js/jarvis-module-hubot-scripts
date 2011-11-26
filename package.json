@@ -1,0 +1,24 @@
+{
+  "author": "Paul Dixon <paul.dixon@mintbridge.co.uk>",
+  "contributors": [
+    { "name": "Alex Whitman", "email": "alex@alexwhitman.com" },
+    { "name": "Paul Dixon", "email": "paul.dixon@mintbridge.co.uk" }
+  ],
+  "name": "dobot-module-hubot-scripts",
+  "description": "Load scripts written for Hubot",
+  "version": "0.0.0",
+  "homepage": "http://dobot.github.com/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dobot/dobot.git"
+  },
+  "keywords": ["bot"],
+  "engines": {
+    "node": ">=0.4.x"
+  },
+  "dependencies": {
+    "coffee-script": ">=1.1.3",
+    "scoped-http-client": ">=0.9.6"
+  },
+  "devDependencies": {}
+}

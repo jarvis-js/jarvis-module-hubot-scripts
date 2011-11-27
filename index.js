@@ -24,19 +24,21 @@ module.exports = function(bot, module) {
 	}
 	var hubot = new Hubot(bot, module);
 	for (var i = 0; i < scriptPaths.length; i++) {
-		fs.readdir(scriptPaths[i], function(err, files) {
-			if (err) {
-				return;
-			}
-			for (var j = 0; j < files.length; j++) {
-				var extension = path.extname(files[j]);
-				var fullPath = path.join(scriptPaths[i], path.basename(files[j], extension));
-				if (extension === '.js' || extension === '.coffee') {
-					require(fullPath)(hubot);
+		(function(scriptPath) {
+			fs.readdir(scriptPath, function(err, files) {
+				if (err) {
+					return;
 				}
-			}
-			hubot.brain.loadBrain();
-		});
+				for (var j = 0; j < files.length; j++) {
+					var extension = path.extname(files[j]);
+					var fullPath = path.join(scriptPath, path.basename(files[j], extension));
+					if (extension === '.js' || extension === '.coffee') {
+						require(fullPath)(hubot);
+					}
+				}
+				hubot.brain.loadBrain();
+			});
+		})(scriptPaths[i]);
 	}
 
 	module.unload = function() {
@@ -86,12 +88,14 @@ Hubot.prototype.leave = function() {
 	// Not available
 };
 
-Hubot.prototype.send = function() {
-	// Not available, no request/channel
+Hubot.prototype.send = function(user, str) {
+	user.request.reply = str;
+	this.bot.respond(user.request);
 };
 
-Hubot.prototype.reply = function() {
-	// Not available, no request/channel
+Hubot.prototype.reply = function(user, str) {
+	user.request.reply = str;
+	this.bot.respond(user.request);
 };
 
 Hubot.prototype.helpCommands = function() {
@@ -122,7 +126,9 @@ function HubotResponse(bot, regex, request) {
 	this.bot = bot;
 	this.request = request;
 	this.message = {
-		user: {},
+		user: {
+			request: request
+		},
 		message: request.text
 	};
 	this.match = regex.exec(request.text);

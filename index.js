@@ -136,7 +136,7 @@ function HubotResponse(bot, regex, request) {
 
 HubotResponse.prototype.send = function(str) {
 	this.request.reply = str;
-	this.bot.respond(this.request);
+	this.bot.reply(this.request);
 };
 
 HubotResponse.prototype.topic = function() {

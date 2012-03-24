@@ -50,7 +50,7 @@ function Hubot(bot, module) {
 	this.bot = bot;
 	this.module = module;
 	this.brain = new HubotBrain(bot);
-};
+}
 
 Hubot.prototype.hear = function(regex, callback) {
 	var _this = this;
@@ -63,7 +63,7 @@ Hubot.prototype.hear = function(regex, callback) {
 Hubot.prototype.respond = function(regex, callback) {
 	var re = regex.toString().split('/');
 	re.shift(); // remove first empty item
-	var modifiers = re.pop() // pop off modifiers
+	var modifiers = re.pop(); // pop off modifiers
 	var pattern = re.join('/');
 	if (pattern[0] !== '^') {
 		pattern = '^' + pattern;
@@ -132,7 +132,7 @@ function HubotResponse(bot, regex, request) {
 		message: request.text
 	};
 	this.match = regex.exec(request.text);
-};
+}
 
 HubotResponse.prototype.send = function(str) {
 	this.request.reply = str;
@@ -161,7 +161,7 @@ function HubotBrain(bot) {
 	this.data.users = {};
 	this.saveSeconds = 5;
 	this.saveTimeout = null;
-};
+}
 
 HubotBrain.prototype.loadBrain = function() {
 	var _this = this;

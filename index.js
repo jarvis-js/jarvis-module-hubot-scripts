@@ -23,22 +23,25 @@ module.exports = function(bot, module) {
 		scriptPaths.push(path.resolve(__dirname + '/scripts/'));
 	}
 	var hubot = new Hubot(bot, module);
-	for (var i = 0; i < scriptPaths.length; i++) {
-		(function(scriptPath) {
-			fs.readdir(scriptPath, function(err, files) {
-				if (err) {
-					return;
+
+	var loadScripts = function(scriptPath) {
+		fs.readdir(scriptPath, function(err, files) {
+			if (err) {
+				return;
+			}
+			for (var j = 0; j < files.length; j++) {
+				var extension = path.extname(files[j]);
+				var fullPath = path.join(scriptPath, path.basename(files[j], extension));
+				if (extension === '.js' || extension === '.coffee') {
+					require(fullPath)(hubot);
 				}
-				for (var j = 0; j < files.length; j++) {
-					var extension = path.extname(files[j]);
-					var fullPath = path.join(scriptPath, path.basename(files[j], extension));
-					if (extension === '.js' || extension === '.coffee') {
-						require(fullPath)(hubot);
-					}
-				}
-				hubot.brain.loadBrain();
-			});
-		})(scriptPaths[i]);
+			}
+			hubot.brain.loadBrain();
+		});
+	};
+
+	for (var k = 0; k < scriptPaths.length; k++) {
+		loadScripts(scriptPaths[k]);
 	}
 
 	module.unload = function() {

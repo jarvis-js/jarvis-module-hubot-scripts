@@ -57,9 +57,12 @@ function Hubot(bot, module) {
 
 Hubot.prototype.hear = function(regex, callback) {
 	var _this = this;
-	this.module.addTrigger(regex, function(request) {
-		var msg = new HubotResponse(_this.bot, regex, request);
-		callback(msg);
+	this.module.addTrigger({
+		match: regex,
+		func: function(request) {
+			var msg = new HubotResponse(_this.bot, regex, request);
+			callback(msg);
+		}
 	});
 };
 
@@ -77,9 +80,12 @@ Hubot.prototype.respond = function(regex, callback) {
 	regex = new RegExp(pattern, modifiers);
 
 	var _this = this;
-	this.module.addCommand(regex, function(request) {
-		var msg = new HubotResponse(_this.bot, regex, request);
-		callback(msg);
+	this.module.addCommand({
+		match: regex,
+		func: function(request) {
+			var msg = new HubotResponse(_this.bot, regex, request);
+			callback(msg);
+		}
 	});
 };
 

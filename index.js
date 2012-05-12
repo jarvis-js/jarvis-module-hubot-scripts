@@ -138,9 +138,9 @@ function HubotResponse(bot, regex, request) {
 		user: {
 			request: request
 		},
-		message: request.text
+		message: request.body
 	};
-	this.match = regex.exec(request.text);
+	this.match = regex.exec(request.body);
 }
 
 HubotResponse.prototype.send = function(str) {

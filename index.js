@@ -5,24 +5,16 @@ var path = require('path');
 var events = require('events');
 var util = require('util');
 
-util.inherits(HubotBrain, events.EventEmitter);
+module.exports = function(jarvis, module) {
 
-module.exports = function(bot, module) {
 	var scriptPaths = [];
-	if (module.options.script_paths) {
-		if (Array.isArray(module.options.script_paths)) {
-			for (var i = 0; i < module.options.script_paths.length; i++) {
-				scriptPaths.push(path.resolve(module.options.script_paths[i]));
-			}
-		}
-		else {
-			scriptPaths.push(path.resolve(module.options.script_paths));
-		}
+	if (module.config.script_paths) {
+		scriptPaths = module.config.script_paths;
 	}
 	else {
 		scriptPaths.push(path.resolve(__dirname + '/scripts/'));
 	}
-	var hubot = new Hubot(bot, module);
+	var hubot = new Hubot(jarvis, module);
 
 	var loadScripts = function(scriptPath) {
 		fs.readdir(scriptPath, function(err, files) {
@@ -36,57 +28,41 @@ module.exports = function(bot, module) {
 					require(fullPath)(hubot);
 				}
 			}
-			hubot.brain.loadBrain();
 		});
 	};
 
 	for (var k = 0; k < scriptPaths.length; k++) {
 		loadScripts(scriptPaths[k]);
 	}
-
-	module.unload = function() {
-		hubot.brain.close();
-	};
 };
 
-function Hubot(bot, module) {
-	this.bot = bot;
+function Hubot(jarvis, module) {
+	this.jarvis = jarvis;
 	this.module = module;
-	this.brain = new HubotBrain(bot);
 }
 
-Hubot.prototype.hear = function(regex, callback) {
+Hubot.prototype.hear = function(regexp, callback) {
 	var _this = this;
-	this.module.addTrigger({
-		match: regex,
-		func: function(request) {
-			var msg = new HubotResponse(_this.bot, regex, request);
+
+	this.module.addAction(this.module.createTrigger({
+		match: regexp,
+		func: function(message) {
+			var msg = new HubotResponse(_this.jarvis, regexp, message);
 			callback(msg);
 		}
-	});
+	}));
 };
 
-Hubot.prototype.respond = function(regex, callback) {
-	var re = regex.toString().split('/');
-	re.shift(); // remove first empty item
-	var modifiers = re.pop(); // pop off modifiers
-	var pattern = re.join('/');
-	if (pattern[0] !== '^') {
-		pattern = '^' + pattern;
-	}
-	if (pattern[pattern.length - 1] !== '$') {
-		pattern += '$';
-	}
-	regex = new RegExp(pattern, modifiers);
-
+Hubot.prototype.respond = function(regexp, callback) {
 	var _this = this;
-	this.module.addCommand({
-		match: regex,
-		func: function(request) {
-			var msg = new HubotResponse(_this.bot, regex, request);
+
+	this.module.addAction(this.module.createCommand({
+		match: regexp,
+		func: function(message) {
+			var msg = new HubotResponse(_this.jarvis, regexp, message);
 			callback(msg);
 		}
-	});
+	}));
 };
 
 Hubot.prototype.enter = function() {
@@ -98,13 +74,11 @@ Hubot.prototype.leave = function() {
 };
 
 Hubot.prototype.send = function(user, str) {
-	user.request.reply = str;
-	this.bot.respond(user.request);
+	this.jarvis.respond(str);
 };
 
 Hubot.prototype.reply = function(user, str) {
-	user.request.reply = str;
-	this.bot.respond(user.request);
+	this.jarvis.respond(str);
 };
 
 Hubot.prototype.helpCommands = function() {
@@ -131,21 +105,14 @@ Hubot.prototype.usersForFuzzyName = function() {
 	return null;
 };
 
-function HubotResponse(bot, regex, request) {
-	this.bot = bot;
-	this.request = request;
-	this.message = {
-		user: {
-			request: request
-		},
-		message: request.body
-	};
-	this.match = regex.exec(request.body);
+function HubotResponse(jarvis, regex, message) {
+	this.jarvis = jarvis;
+	this.match = regex.exec(message.body);
+	this.message = message;
 }
 
 HubotResponse.prototype.send = function(str) {
-	this.request.reply = str;
-	this.bot.reply(this.request);
+	this.jarvis.reply(this.message, str);
 };
 
 HubotResponse.prototype.topic = function() {
@@ -162,52 +129,4 @@ HubotResponse.prototype.random = function(items) {
 
 HubotResponse.prototype.http = function(url) {
 	return httpClient.create(url);
-};
-
-function HubotBrain(bot) {
-	this.bot = bot;
-	this.data = {};
-	this.data.users = {};
-	this.saveSeconds = 5;
-	this.saveTimeout = null;
-}
-
-HubotBrain.prototype.loadBrain = function() {
-	var _this = this;
-	this.bot.storage.load('hubot-scripts', function(data) {
-		if (data !== null) {
-			_this.data = data;
-		}
-		_this.emit('loaded', _this.data);
-		_this.resetSaveTimeout();
-	});
-};
-
-HubotBrain.prototype.saveBrain = function(ending) {
-	ending = ending || false;
-	var _this = this;
-	this.bot.storage.save('hubot-scripts', this.data, function() {
-		_this.emit('save', this.data);
-		if (!ending) {
-			_this.resetSaveTimeout();
-		}
-	});
-};
-
-HubotBrain.prototype.resetSaveTimeout = function() {
-	if (this.saveTimeout) {
-		clearTimeout(this.saveTimeout);
-	}
-	var _this = this;
-	this.saveTimeout = setTimeout(function() {
-		_this.saveBrain();
-	}, this.saveSeconds * 1000);
-};
-
-HubotBrain.prototype.close = function() {
-	if (this.saveInterval) {
-		clearInterval(this.saveInterval);
-	}
-	this.saveBrain();
-	this.emit('close');
 };
